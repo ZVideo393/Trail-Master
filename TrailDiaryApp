@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dirt Diary — MTB Ride Journal</title>
+<title>Dirtfolio — MTB Ride Journal</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -542,6 +542,83 @@
     transform: translateX(-50%) translateY(0);
   }
 
+  
+  /* Summary Stats */
+  .summary-strip {
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .summary-strip h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.08em;
+    color: var(--dust);
+    margin-bottom: 1rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .stat-tile {
+    background: var(--bark);
+    border: 1px solid #ffffff0d;
+    border-radius: 14px;
+    padding: 1.1rem 1rem;
+    text-align: center;
+    box-shadow: 0 4px 16px #00000030;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-tile::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--dust), var(--trail));
+    border-radius: 14px 14px 0 0;
+  }
+
+  .stat-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.05em;
+    color: var(--sun);
+    line-height: 1;
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--trail);
+    margin-top: 0.25rem;
+    display: block;
+  }
+
+  .stat-sub {
+    font-size: 0.72rem;
+    color: var(--dust);
+    margin-top: 0.2rem;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   @keyframes fadeDown {
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -560,7 +637,7 @@
   <!-- Header -->
   <header>
     <div class="logo-mark">🚵</div>
-    <h1>Dirt Diary</h1>
+    <h1>Dirtfolio</h1>
     <p>Mountain Bike Ride Journal</p>
   </header>
 
@@ -992,6 +1069,41 @@
 
   </form>
 
+  <!-- Summary Stats -->
+  <div class="summary-strip">
+    <div class="divider"><span>📊</span></div>
+    <h2>Your Stats</h2>
+    <div class="stats-grid">
+      <div class="stat-tile">
+        <span class="stat-icon">🏁</span>
+        <span class="stat-value" id="statTotalRides">3</span>
+        <span class="stat-label">Total Rides</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-icon">📏</span>
+        <span class="stat-value" id="statTotalDist">45.5</span>
+        <span class="stat-label">Total Miles</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-icon">📍</span>
+        <span class="stat-value" id="statFavLocationShort">—</span>
+        <span class="stat-label">Fav Location</span>
+        <span class="stat-sub" id="statFavLocation">—</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-icon">🚲</span>
+        <span class="stat-value" id="statFavBikeShort">—</span>
+        <span class="stat-label">Fav Bike</span>
+        <span class="stat-sub" id="statFavBike">—</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-icon" id="statFeelIcon">😎</span>
+        <span class="stat-value" id="statAvgFeel" style="font-size:1rem;padding-top:0.2rem;">Solid</span>
+        <span class="stat-label">Avg Feel</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Past Rides -->
   <div class="rides-strip">
     <div class="divider"><span>🌲</span></div>
@@ -1029,12 +1141,12 @@
 
 <script>
   // ── Bike Garage ──────────────────────────────────────────────────────────
-  let bikeGarage = JSON.parse(localStorage.getItem('dirtDiaryGarage') || '[]');
+  let bikeGarage = JSON.parse(localStorage.getItem('dirtfolioGarage') || '[]');
   let selectedBikeId = null;
   let garageOpen = false;
 
   function saveGarage() {
-    localStorage.setItem('dirtDiaryGarage', JSON.stringify(bikeGarage));
+    localStorage.setItem('dirtfolioGarage', JSON.stringify(bikeGarage));
   }
 
   function renderGarage() {
@@ -1179,6 +1291,68 @@
     el.classList.toggle('active');
   }
 
+  // ── Ride Log (persisted) ─────────────────────────────────────────────────
+  var rideLog = JSON.parse(localStorage.getItem('dirtfolioLog') || '[]');
+
+  // Seed with sample rides if empty so stats show something on first load
+  if (rideLog.length === 0) {
+    rideLog = [
+      { trail: 'Pisgah — Black Mountain Loop', date: '2026-02-18', dist: 22.4, feel: '🔥', surface: 'Tacky (perfect)', bike: '' },
+      { trail: 'Dupont State Forest',           date: '2026-02-10', dist: 15.1, feel: '😎', surface: 'Slightly damp',   bike: '' },
+      { trail: 'Local Trails — Backyard Shred', date: '2026-02-04', dist: 8.0,  feel: '😐', surface: 'Dry & dusty',     bike: '' }
+    ];
+    localStorage.setItem('dirtfolioLog', JSON.stringify(rideLog));
+  }
+
+  function saveRideLog(ride) {
+    rideLog.push(ride);
+    localStorage.setItem('dirtfolioLog', JSON.stringify(rideLog));
+  }
+
+  function computeStats() {
+    var total = rideLog.length;
+    var totalDist = 0;
+    var locationCount = {};
+    var bikeCount = {};
+    var feelScore = { '🔥': 5, '😎': 4, '😐': 3, '😓': 2, '💀': 1 };
+    var feelTotal = 0; var feelN = 0;
+
+    rideLog.forEach(function(r) {
+      totalDist += parseFloat(r.dist) || 0;
+      if (r.trail) locationCount[r.trail] = (locationCount[r.trail] || 0) + 1;
+      if (r.bike)  bikeCount[r.bike]   = (bikeCount[r.bike]   || 0) + 1;
+      if (feelScore[r.feel]) { feelTotal += feelScore[r.feel]; feelN++; }
+    });
+
+    var favLoc = Object.keys(locationCount).sort(function(a,b){ return locationCount[b]-locationCount[a]; })[0] || '—';
+    var favBike = Object.keys(bikeCount).sort(function(a,b){ return bikeCount[b]-bikeCount[a]; })[0] || '—';
+
+    var avgScore = feelN > 0 ? feelTotal / feelN : 0;
+    var avgLabel, avgIcon;
+    if      (avgScore >= 4.5) { avgLabel = 'On Fire';   avgIcon = '🔥'; }
+    else if (avgScore >= 3.5) { avgLabel = 'Solid';     avgIcon = '😎'; }
+    else if (avgScore >= 2.5) { avgLabel = 'Meh';       avgIcon = '😐'; }
+    else if (avgScore >= 1.5) { avgLabel = 'Struggled'; avgIcon = '😓'; }
+    else if (avgScore > 0)    { avgLabel = 'Cooked';    avgIcon = '💀'; }
+    else                      { avgLabel = '—';         avgIcon = '😐'; }
+
+    document.getElementById('statTotalRides').textContent = total;
+    document.getElementById('statTotalDist').textContent  = totalDist.toFixed(1);
+
+    var locShort = favLoc.length > 8 ? favLoc.substring(0,8)+'…' : favLoc;
+    document.getElementById('statFavLocationShort').textContent = locShort;
+    document.getElementById('statFavLocation').textContent = favLoc;
+
+    var bikeShort = favBike.length > 8 ? favBike.substring(0,8)+'…' : favBike;
+    document.getElementById('statFavBikeShort').textContent = bikeShort;
+    document.getElementById('statFavBike').textContent = favBike;
+
+    document.getElementById('statFeelIcon').textContent  = avgIcon;
+    document.getElementById('statAvgFeel').textContent   = avgLabel;
+  }
+
+  computeStats();
+
   function saveRide(e) {
     e.preventDefault();
     const trail = document.getElementById('trailName').value.trim();
@@ -1188,6 +1362,17 @@
     const feel = rideVibe || '\uD83D\uDE10';
 
     if (!trail) { document.getElementById('trailName').focus(); return; }
+
+    // Get selected bike name
+    var bikeName = '';
+    if (selectedBikeId) {
+      var foundBike = bikeGarage.find(function(b) { return b.id === selectedBikeId; });
+      if (foundBike) bikeName = foundBike.name;
+    }
+
+    // Persist to log
+    saveRideLog({ trail: trail, date: date, dist: parseFloat(dist) || 0, feel: feel, surface: surface, bike: bikeName });
+    computeStats();
 
     const entry = document.createElement('div');
     entry.className = 'ride-entry';
