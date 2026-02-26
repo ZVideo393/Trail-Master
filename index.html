@@ -1258,6 +1258,56 @@
 
   }
 
+/* ── Ride Detail Overlay ──────────────────────────────────────────────── */
+
+#rideDetailOverlay { position:fixed; top:0; left:0; right:0; bottom:0; background:var(--soil); z-index:500; overflow-y:auto; transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.16,1,0.3,1); }
+
+#rideDetailOverlay.open { transform:translateY(0); }
+
+.detail-header { position:sticky; top:0; background:var(--bark); border-bottom:1px solid var(--mud); padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; z-index:10; }
+
+.detail-back { background:none; border:1.5px solid var(--mud); color:var(--sun); padding:0.4rem 0.9rem; border-radius:8px; font-size:0.85rem; font-weight:700; cursor:pointer; flex-shrink:0; }
+
+.detail-back:hover { background:var(--mud); }
+
+.detail-ride-name { font-family:'Bebas Neue',sans-serif; font-size:1.25rem; color:var(--cream); line-height:1.15; }
+
+.detail-body { max-width:680px; margin:0 auto; padding:1.5rem 1.25rem 3rem; display:flex; flex-direction:column; gap:1.1rem; }
+
+.detail-section { background:var(--bark); border-radius:14px; padding:1.25rem; border:1px solid #ffffff08; }
+
+.detail-section-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:0.06em; color:var(--sun); margin-bottom:0.65rem; }
+
+.best-subtitle { font-size:0.7rem; color:var(--trail); margin-top:-0.4rem; margin-bottom:0.8rem; }
+
+.best-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:0.5rem; }
+
+.best-card { background:var(--soil); border-radius:10px; padding:0.6rem 0.8rem; border:1px solid var(--mud); }
+
+.best-card-label { font-size:0.63rem; color:var(--trail); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.18rem; }
+
+.best-card-value { font-size:1.05rem; font-weight:700; color:var(--cream); }
+
+.best-card-unit { font-size:0.68rem; color:var(--trail); margin-left:0.15rem; }
+
+.best-none { font-size:0.82rem; color:var(--trail); font-style:italic; }
+
+.detail-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.55rem; }
+
+.detail-info-item { background:var(--soil); border-radius:10px; padding:0.6rem 0.8rem; border:1px solid var(--mud); }
+
+.detail-info-label { font-size:0.63rem; color:var(--trail); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.18rem; }
+
+.detail-info-value { font-size:0.9rem; font-weight:600; color:var(--cream); }
+
+.detail-susp-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
+
+.detail-susp-item { background:var(--soil); border-radius:10px; padding:0.55rem 0.75rem; border:1px solid var(--mud); }
+
+.detail-susp-label { font-size:0.63rem; color:var(--trail); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.12rem; }
+
+.detail-susp-value { font-size:0.88rem; font-weight:600; color:var(--cream); }
+
 </style>
 
 </head>
@@ -2338,6 +2388,52 @@
 
 
 
+<!-- Ride Detail Overlay -->
+
+<div id="rideDetailOverlay">
+
+<div class="detail-header">
+
+<button class="detail-back" onclick="closeRideDetail()">&#8592; Back</button>
+
+<div id="detailRideName" class="detail-ride-name"></div>
+
+</div>
+
+<div class="detail-body">
+
+<div class="detail-section" id="bestSettingsSection">
+
+<div class="detail-section-title">⭐ Best Settings</div>
+
+<div class="best-subtitle" id="bestCount"></div>
+
+<div class="best-grid" id="bestGrid"></div>
+
+</div>
+
+<div class="detail-section">
+
+<div class="detail-section-title">📍 This Ride</div>
+
+<div id="detailRideInfo"></div>
+
+</div>
+
+<div class="detail-section">
+
+<div class="detail-section-title">⚙️ Suspension Setup</div>
+
+<div id="detailSuspension"></div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
 <!-- Toast -->
 
 <div class="toast" id="toast">✅ Ride saved to your diary!</div>
@@ -2650,7 +2746,7 @@
 
   // ── Ride Log (persisted) ─────────────────────────────────────────────────
 
-  var rideLog = JSON.parse(localStorage.getItem('dirtfolioLog') || '[]');
+  var rideLog = JSON.parse(localStorage.getItem('dirtfolioLog') || '[]'); rideLog.forEach(function(r,i){ if(!r.id) r.id='r'+i; });
 
 
 
@@ -2808,7 +2904,7 @@
 
     // Persist to log
 
-    saveRideLog({ trail: trail, date: date, dist: parseFloat(dist) || 0, feel: feel, surface: surface, bike: bikeName });
+    saveRideLog({ id: Date.now().toString(), trail: trail, date: date, dist: parseFloat(dist)||0, feel: feel, surface: surface, bike: bikeName, forkPsi: document.getElementById('forkPsi').value, shockPsi: document.getElementById('shockPsi').value, forkHSC: document.getElementById('forkHSC').value, shockHSC: document.getElementById('shockHSC').value, forkLSC: document.getElementById('forkLSC').value, shockLSC: document.getElementById('shockLSC').value, forkLSR: document.getElementById('forkLSR').value, shockLSR: document.getElementById('shockLSR').value, forkHSR: document.getElementById('forkHSR').value, shockHSR: document.getElementById('shockHSR').value, suspensionNotes: document.getElementById('suspensionNotes').value });
 
     computeStats();
 
@@ -2836,7 +2932,7 @@
 
     const pastRides = document.getElementById('pastRides');
 
-    pastRides.insertBefore(entry, pastRides.firstChild);
+    renderPastRides();
 
 
 
@@ -2869,6 +2965,122 @@
     setTimeout(function() { document.querySelector('.rides-strip').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
 
   }
+
+// ── Render past rides from rideLog ───────────────────────────────────────
+
+function renderPastRides() {
+
+var p = document.getElementById('pastRides');
+
+p.innerHTML = '';
+
+rideLog.slice().reverse().forEach(function(ride) {
+
+var e = document.createElement('div');
+
+e.className = 'ride-entry';
+
+var d = ride.date ? new Date(ride.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '\u2014';
+
+e.innerHTML = '<div class="ride-entry-info"><h3>'+ride.trail+'</h3><p>'+d+(ride.dist?' \u00b7 '+ride.dist+' mi':'')+(ride.surface?' \u00b7 '+ride.surface:'')+'</p></div><div class="ride-entry-feel">'+(ride.feel||'\uD83D\uDE10')+'</div>';
+
+(function(r){ e.addEventListener('click', function(){ openRideDetail(r.id); }); })(ride);
+
+p.appendChild(e);
+
+});
+
+}
+
+
+
+// ── Best settings: avg suspension from 🔥 + 😎 rides ────────────────────
+
+function computeBestSettings() {
+
+var good = rideLog.filter(function(r){ return r.feel==='\uD83D\uDD25'||r.feel==='\uD83D\uDE0E'; });
+
+if (!good.length) return null;
+
+function avg(k) {
+
+var v = good.map(function(r){ return parseFloat(r[k]); }).filter(function(x){ return !isNaN(x)&&x>0; });
+
+return v.length ? (v.reduce(function(a,b){return a+b;},0)/v.length).toFixed(1) : null;
+
+}
+
+return { count:good.length, forkPsi:avg('forkPsi'), shockPsi:avg('shockPsi'), forkHSC:avg('forkHSC'), shockHSC:avg('shockHSC'), forkLSC:avg('forkLSC'), shockLSC:avg('shockLSC'), forkLSR:avg('forkLSR'), shockLSR:avg('shockLSR'), forkHSR:avg('forkHSR'), shockHSR:avg('shockHSR') };
+
+}
+
+
+
+// ── Open ride detail overlay ──────────────────────────────────────────────
+
+function openRideDetail(rideId) {
+
+var ride = rideLog.find(function(r){ return r.id===rideId; });
+
+if (!ride) return;
+
+document.getElementById('detailRideName').textContent = ride.trail;
+
+var best = computeBestSettings();
+
+var bestSec = document.getElementById('bestSettingsSection');
+
+if (best) {
+
+var fields = [{k:'forkPsi',l:'Fork Pressure',u:'PSI'},{k:'shockPsi',l:'Shock Pressure',u:'PSI'},{k:'forkHSC',l:'Fork HS Comp',u:'clicks'},{k:'shockHSC',l:'Shock HS Comp',u:'clicks'},{k:'forkLSC',l:'Fork LS Comp',u:'clicks'},{k:'shockLSC',l:'Shock LS Comp',u:'clicks'},{k:'forkLSR',l:'Fork LS Rebound',u:'clicks'},{k:'shockLSR',l:'Shock LS Rebound',u:'clicks'},{k:'forkHSR',l:'Fork HS Rebound',u:'clicks'},{k:'shockHSR',l:'Shock HS Rebound',u:'clicks'}];
+
+var bHtml = '';
+
+fields.forEach(function(f){ if(best[f.k]) bHtml += '<div class="best-card"><div class="best-card-label">'+f.l+'</div><div class="best-card-value">'+best[f.k]+'<span class="best-card-unit"> '+f.u+'</span></div></div>'; });
+
+document.getElementById('bestGrid').innerHTML = bHtml || '<div class="best-none">Log rides with suspension data to see best settings.</div>';
+
+document.getElementById('bestCount').textContent = 'Averaged from '+best.count+' top ride'+(best.count!==1?'s':'')+' (\uD83D\uDD25 & \uD83D\uDE0E)';
+
+bestSec.style.display = '';
+
+} else { bestSec.style.display = 'none'; }
+
+var fl = {'\uD83D\uDD25':'On Fire','\uD83D\uDE0E':'Solid','\uD83D\uDE10':'Meh','\uD83D\uDE13':'Struggled','\uD83D\uDC80':'Cooked'};
+
+var feelLabel = fl[ride.feel] || ride.feel || '\u2014';
+
+var ds = ride.date ? new Date(ride.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}) : '\u2014';
+
+document.getElementById('detailRideInfo').innerHTML = '<div class="detail-info-grid"><div class="detail-info-item"><div class="detail-info-label">Date</div><div class="detail-info-value">'+ds+'</div></div><div class="detail-info-item"><div class="detail-info-label">Distance</div><div class="detail-info-value">'+(ride.dist?ride.dist+' mi':'\u2014')+'</div></div><div class="detail-info-item"><div class="detail-info-label">Trail Condition</div><div class="detail-info-value">'+(ride.surface||'\u2014')+'</div></div><div class="detail-info-item"><div class="detail-info-label">Bike</div><div class="detail-info-value">'+(ride.bike||'\u2014')+'</div></div><div class="detail-info-item" style="grid-column:1/-1"><div class="detail-info-label">Body Feeling</div><div class="detail-info-value" style="font-size:1.5rem">'+(ride.feel||'')+' '+feelLabel+'</div></div></div>';
+
+function sRow(label,fv,sv,unit){ var f=fv||'\u2014',s=sv||'\u2014',fu=fv?' '+unit:'',su=sv?' '+unit:''; return '<div class="detail-susp-item"><div class="detail-susp-label">Fork '+label+'</div><div class="detail-susp-value">'+f+fu+'</div></div><div class="detail-susp-item"><div class="detail-susp-label">Shock '+label+'</div><div class="detail-susp-value">'+s+su+'</div></div>'; }
+
+var sh = '<div class="detail-susp-grid">'+sRow('Pressure',ride.forkPsi,ride.shockPsi,'PSI')+sRow('HS Compression',ride.forkHSC,ride.shockHSC,'clicks')+sRow('LS Compression',ride.forkLSC,ride.shockLSC,'clicks')+sRow('LS Rebound',ride.forkLSR,ride.shockLSR,'clicks')+sRow('HS Rebound',ride.forkHSR,ride.shockHSR,'clicks')+'</div>';
+
+if (ride.suspensionNotes) sh += '<div style="margin-top:0.75rem;font-size:0.82rem;color:var(--trail);font-style:italic;">"'+ride.suspensionNotes+'"</div>';
+
+document.getElementById('detailSuspension').innerHTML = sh;
+
+document.getElementById('rideDetailOverlay').classList.add('open');
+
+document.body.style.overflow = 'hidden';
+
+}
+
+
+
+function closeRideDetail() {
+
+document.getElementById('rideDetailOverlay').classList.remove('open');
+
+document.body.style.overflow = '';
+
+}
+
+
+
+renderPastRides();
 
 </script>
 
